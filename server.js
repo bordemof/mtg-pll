@@ -63,6 +63,17 @@ function finishRound() {
   io.emit('roundFinished', gameStateToSend);
 }
 
+function getCleanGameState() {
+  return {
+    votes: gameState.votes,
+    userVotes: gameState.userVotes,
+    contestants: gameState.contestants,
+    roundActive: gameState.roundActive,
+    roundEndTime: gameState.roundEndTime,
+    connectedUserCount: gameState.connectedUsers.size
+  };
+}
+
 function checkRoundCompletion() {
   const totalUsers = gameState.connectedUsers.size;
   const votedUsers = Object.keys(gameState.userVotes).length;
@@ -77,12 +88,7 @@ io.on('connection', (socket) => {
   
   gameState.connectedUsers.add(socket.id);
   
-  // Send gameState with connected user count
-  const gameStateToSend = {
-    ...gameState,
-    connectedUserCount: gameState.connectedUsers.size
-  };
-  socket.emit('gameState', gameStateToSend);
+  socket.emit('gameState', getCleanGameState());
   
   socket.on('vote', (data) => {
     const { contestantId } = data;
