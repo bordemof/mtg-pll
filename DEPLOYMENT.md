@@ -20,20 +20,32 @@
 
 #### Build & Deploy Settings
 - **Runtime**: `Node`
-- **Build Command**: 
+- **Build Command** (try these in order):
+  
+  **Option 1** (Recommended):
   ```bash
   npm run build
   ```
+  
+  **Option 2** (If Option 1 fails):
+  ```bash
+  npm run build-simple
+  ```
+  
+  **Option 3** (If scripts don't work):
+  ```bash
+  npm install && cd client && npm install && npm run build
+  ```
+
 - **Start Command**: 
   ```bash
   npm start
   ```
 
-**⚠️ IMPORTANT**: Make sure to use exactly `npm run build` as the build command. This will:
-1. Install server dependencies
-2. Install client dependencies
-3. Build the React app
-4. Verify the build was successful
+**⚠️ TROUBLESHOOTING**: If the build command fails:
+1. Try each build command option above in order
+2. Check the build logs for specific error messages
+3. The app now has runtime build recovery - it will attempt to build on startup if files are missing
 
 #### Environment Variables
 Add these environment variables in Render:

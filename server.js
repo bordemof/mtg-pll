@@ -3,6 +3,7 @@ const { createServer } = require('http');
 const { Server } = require('socket.io');
 const path = require('path');
 const fs = require('fs');
+const { execSync } = require('child_process');
 const { v4: uuidv4 } = require('uuid');
 
 const app = express();
@@ -29,15 +30,38 @@ console.log('Build directory exists:', fs.existsSync(buildPath));
 console.log('Index.html exists:', fs.existsSync(indexPath));
 
 if (fs.existsSync(buildPath)) {
-  console.log('Serving static files from:', buildPath);
+  console.log('✅ Serving static files from:', buildPath);
   app.use(express.static(buildPath));
 } else {
-  console.error('Build directory not found! Make sure to run the build process.');
-  console.log('Current directory contents:');
+  console.error('❌ Build directory not found!');
+  console.log('Current directory contents:', fs.readdirSync(__dirname));
+  
   if (fs.existsSync(path.join(__dirname, 'client'))) {
     console.log('Client directory contents:', fs.readdirSync(path.join(__dirname, 'client')));
+    
+    // Attempt to build if in production and client exists
+    if (process.env.NODE_ENV === 'production') {
+      console.log('🔨 Attempting to build React app...');
+      try {
+        const clientDir = path.join(__dirname, 'client');
+        console.log('Installing client dependencies...');
+        execSync('npm install', { cwd: clientDir, stdio: 'inherit' });
+        
+        console.log('Building React app...');
+        execSync('npm run build', { cwd: clientDir, stdio: 'inherit' });
+        
+        if (fs.existsSync(buildPath)) {
+          console.log('✅ Build successful! Serving static files.');
+          app.use(express.static(buildPath));
+        } else {
+          console.error('❌ Build failed - directory still missing');
+        }
+      } catch (error) {
+        console.error('❌ Build failed:', error.message);
+      }
+    }
   } else {
-    console.log('Client directory does not exist!');
+    console.log('❌ Client directory does not exist!');
   }
 }
 
