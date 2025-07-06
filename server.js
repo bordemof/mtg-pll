@@ -6,13 +6,20 @@ const { v4: uuidv4 } = require('uuid');
 
 const app = express();
 const server = createServer(app);
+
+// Configure CORS for production and development
+const isDevelopment = process.env.NODE_ENV !== 'production';
+const corsOrigin = isDevelopment ? "http://localhost:3000" : true;
+
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:3000",
-    methods: ["GET", "POST"]
+    origin: corsOrigin,
+    methods: ["GET", "POST"],
+    credentials: true
   }
 });
 
+// Serve static files from the React app build directory
 app.use(express.static(path.join(__dirname, 'client/build')));
 
 let gameState = {

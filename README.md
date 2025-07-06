@@ -28,26 +28,43 @@ A real-time voting application inspired by Magic: The Gathering card game aesthe
 
 ## Running the Application
 
-Start both server and client in development mode:
+### Option 1: Quick Start (Recommended)
 ```bash
-npm run dev
+./start.sh
 ```
 
-Or run them separately:
-
+### Option 2: Manual Start
 1. Start the server:
    ```bash
-   npm run server
+   node server.js
    ```
 
 2. Start the client (in a new terminal):
    ```bash
-   npm run client
+   cd client
+   npm start
    ```
 
+### Option 3: Development Mode
+```bash
+npm run dev
+```
+
 The application will be available at:
-- Frontend: http://localhost:3000
+- Frontend: http://localhost:3000 (automatically redirects to /party-time)
 - Backend: http://localhost:3001
+
+**Note**: If you see a "Loading..." screen, make sure both server and client are running.
+
+## Deployment
+
+For production deployment (Render, Heroku, etc.), see [DEPLOYMENT.md](DEPLOYMENT.md) for detailed instructions.
+
+Quick deployment to Render:
+1. Connect your GitHub repository
+2. Set Build Command: `npm install && cd client && npm install && npm run build`
+3. Set Start Command: `npm start`
+4. Add Environment Variable: `NODE_ENV=production`
 
 ## How to Use
 

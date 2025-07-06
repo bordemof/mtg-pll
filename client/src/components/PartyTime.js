@@ -10,10 +10,13 @@ const PartyTime = () => {
   const [error, setError] = useState('');
   const [timeRemaining, setTimeRemaining] = useState(null);
   const [roundFinished, setRoundFinished] = useState(false);
+  const [connectionStatus, setConnectionStatus] = useState('connecting');
 
   useEffect(() => {
     console.log('Attempting to connect to Socket.IO server...');
-    const newSocket = io('http://localhost:3001', {
+    // Use relative URL in production, localhost in development
+    const serverUrl = process.env.NODE_ENV === 'production' ? undefined : 'http://localhost:3001';
+    const newSocket = io(serverUrl, {
       transports: ['websocket', 'polling'],
       timeout: 5000,
       reconnection: true,
@@ -24,14 +27,17 @@ const PartyTime = () => {
 
     newSocket.on('connect', () => {
       console.log('Connected to server successfully!', newSocket.id);
+      setConnectionStatus('connected');
     });
 
     newSocket.on('connect_error', (error) => {
       console.error('Socket connection error:', error);
+      setConnectionStatus('error');
     });
 
     newSocket.on('disconnect', (reason) => {
       console.log('Disconnected from server:', reason);
+      setConnectionStatus('disconnected');
     });
 
     newSocket.on('gameState', (state) => {
@@ -157,7 +163,18 @@ const PartyTime = () => {
   if (!gameState) {
     return (
       <div className="page-container">
-        <div className="mtg-title">Loading...</div>
+        <div className="mtg-title">Magic Poll</div>
+        <div className="mtg-subtitle">
+          {connectionStatus === 'connecting' && 'Connecting to server...'}
+          {connectionStatus === 'connected' && 'Loading game state...'}
+          {connectionStatus === 'error' && 'Connection failed. Please refresh the page.'}
+          {connectionStatus === 'disconnected' && 'Disconnected from server. Reconnecting...'}
+        </div>
+        {connectionStatus === 'error' && (
+          <div className="error-message">
+            Make sure the server is running on port 3001
+          </div>
+        )}
       </div>
     );
   }
