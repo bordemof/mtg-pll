@@ -8,9 +8,11 @@
     "dev": "concurrently \"npm run server\" \"npm run client\"",
     "server": "nodemon server.js",
     "client": "cd client && npm start",
-    "build": "cd client && npm install && npm run build",
+    "build": "echo 'Starting build process...' && cd client && echo 'Installing client dependencies...' && npm install && echo 'Building React app...' && npm run build && echo 'Verifying build...' && ls -la build/ && cd .. && node scripts/verify-build.js && echo 'Build completed successfully!'",
+    "postbuild": "node scripts/verify-build.js",
     "heroku-postbuild": "npm run build",
-    "render-build": "npm run build"
+    "render-build": "npm run build",
+    "verify": "node scripts/verify-build.js"
   },
   "dependencies": {
     "express": "^4.18.2",

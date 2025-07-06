@@ -2,6 +2,7 @@ const express = require('express');
 const { createServer } = require('http');
 const { Server } = require('socket.io');
 const path = require('path');
+const fs = require('fs');
 const { v4: uuidv4 } = require('uuid');
 
 const app = express();
@@ -19,8 +20,26 @@ const io = new Server(server, {
   }
 });
 
-// Serve static files from the React app build directory
-app.use(express.static(path.join(__dirname, 'client/build')));
+// Check if build directory exists
+const buildPath = path.join(__dirname, 'client/build');
+const indexPath = path.join(buildPath, 'index.html');
+
+console.log('Checking build directory:', buildPath);
+console.log('Build directory exists:', fs.existsSync(buildPath));
+console.log('Index.html exists:', fs.existsSync(indexPath));
+
+if (fs.existsSync(buildPath)) {
+  console.log('Serving static files from:', buildPath);
+  app.use(express.static(buildPath));
+} else {
+  console.error('Build directory not found! Make sure to run the build process.');
+  console.log('Current directory contents:');
+  if (fs.existsSync(path.join(__dirname, 'client'))) {
+    console.log('Client directory contents:', fs.readdirSync(path.join(__dirname, 'client')));
+  } else {
+    console.log('Client directory does not exist!');
+  }
+}
 
 let gameState = {
   votes: {},
@@ -163,7 +182,42 @@ io.on('connection', (socket) => {
 });
 
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'client/build', 'index.html'));
+  const indexFile = path.join(__dirname, 'client/build', 'index.html');
+  
+  if (fs.existsSync(indexFile)) {
+    res.sendFile(indexFile);
+  } else {
+    console.error('Index.html not found, serving error page');
+    res.status(500).send(`
+      <html>
+        <head>
+          <title>Magic Poll - Build Error</title>
+          <style>
+            body { font-family: Arial, sans-serif; padding: 50px; text-align: center; background: #1a1a1a; color: #fff; }
+            .error { background: #ff4444; padding: 20px; border-radius: 10px; margin: 20px auto; max-width: 600px; }
+            .code { background: #333; padding: 10px; border-radius: 5px; font-family: monospace; margin: 10px 0; }
+          </style>
+        </head>
+        <body>
+          <h1>🔥 Magic Poll - Build Error</h1>
+          <div class="error">
+            <h2>Application Not Built</h2>
+            <p>The React application hasn't been built properly for production.</p>
+            <p><strong>Build path:</strong> <code>${buildPath}</code></p>
+            <p><strong>Index file:</strong> <code>${indexFile}</code></p>
+          </div>
+          <div class="code">
+            <p><strong>To fix this, run the build command:</strong></p>
+            <code>npm run build</code>
+          </div>
+          <p>If you're deploying on Render, make sure your build command is:</p>
+          <div class="code">
+            <code>npm install && cd client && npm install && npm run build</code>
+          </div>
+        </body>
+      </html>
+    `);
+  }
 });
 
 const PORT = process.env.PORT || 3001;

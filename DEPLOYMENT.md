@@ -22,12 +22,18 @@
 - **Runtime**: `Node`
 - **Build Command**: 
   ```bash
-  npm install && cd client && npm install && npm run build
+  npm run build
   ```
 - **Start Command**: 
   ```bash
   npm start
   ```
+
+**⚠️ IMPORTANT**: Make sure to use exactly `npm run build` as the build command. This will:
+1. Install server dependencies
+2. Install client dependencies
+3. Build the React app
+4. Verify the build was successful
 
 #### Environment Variables
 Add these environment variables in Render:
@@ -48,7 +54,19 @@ The application will automatically redirect to `/party-time` when you visit the 
 
 ### Build Fails with "ENOENT: no such file or directory"
 - **Cause**: React app not built or build files missing
-- **Solution**: Ensure the build command includes client build: `npm install && cd client && npm install && npm run build`
+- **Solution**: 
+  1. Use the exact build command: `npm run build`
+  2. Check build logs for errors during the React build process
+  3. Ensure `client/package.json` has all required dependencies
+  4. Verify the build command completes successfully before starting the server
+
+### Build Command Shows Success But Files Missing
+- **Cause**: Build process exited early or didn't complete
+- **Solution**:
+  1. Check the full build log in Render dashboard
+  2. Look for npm errors or warnings during client dependency installation
+  3. Verify that `client/build/index.html` is created during build
+  4. Use `npm run verify` locally to test the build process
 
 ### Socket.IO Connection Issues
 - **Cause**: CORS or WebSocket configuration

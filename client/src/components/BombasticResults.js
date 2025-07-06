@@ -53,7 +53,7 @@ const BombasticResults = () => {
   }, []);
 
   const getResults = () => {
-    if (!gameState) return { winner: null, loser: null };
+    if (!gameState) return { winners: [], losers: [] };
 
     const contestants = gameState.contestants.map(contestant => ({
       ...contestant,
@@ -66,12 +66,9 @@ const BombasticResults = () => {
     const minVotes = sortedContestants[sortedContestants.length - 1].votes;
     
     const winners = sortedContestants.filter(c => c.votes === maxVotes);
-    const losers = sortedContestants.filter(c => c.votes === minVotes);
+    const losers = sortedContestants.filter(c => c.votes === minVotes && c.votes !== maxVotes);
     
-    return {
-      winner: winners[Math.floor(Math.random() * winners.length)],
-      loser: losers[Math.floor(Math.random() * losers.length)]
-    };
+    return { winners, losers };
   };
 
   const handleReset = () => {
@@ -99,7 +96,7 @@ const BombasticResults = () => {
     );
   }
 
-  const { winner, loser } = getResults();
+  const { winners, losers } = getResults();
   const totalVotes = Object.values(gameState.votes).reduce((sum, votes) => sum + votes, 0);
   const voterCount = gameState.userVotes ? Object.keys(gameState.userVotes).length : 0;
   const connectedUsers = gameState.connectedUserCount || 0;
@@ -107,7 +104,9 @@ const BombasticResults = () => {
   return (
     <div className="page-container">
       <h1 className="mtg-title">Bombastic Results</h1>
-      <h2 className="mtg-subtitle">The Battle Has Concluded</h2>
+      <h2 className="mtg-subtitle">
+        {gameState.roundActive ? "Battle in Progress..." : "The Battle Has Concluded"}
+      </h2>
       
       {totalVotes === 0 ? (
         <div className="results-container">
@@ -118,23 +117,84 @@ const BombasticResults = () => {
             Return to Party Time to cast your votes!
           </div>
         </div>
+      ) : gameState.roundActive ? (
+        <div className="results-container">
+          <div className="voting-in-progress">
+            <div className="result-title" style={{ color: '#4caf50' }}>
+              🔥 Votes Are Being Cast! 🔥
+            </div>
+            <div className="flames-container">
+              {gameState.contestants.map((contestant, index) => (
+                <div key={contestant.id} className="flame-indicator" style={{animationDelay: `${index * 0.2}s`}}>
+                  <div className="flame">🔥</div>
+                  <div className="contestant-mini">
+                    <div className="mini-emoji">{contestant.emoji}</div>
+                    <div className="mini-name">{contestant.name}</div>
+                    <div className="mini-votes">{gameState.votes[contestant.id]} votes</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="voting-status">
+              <p>Watching the magical votes flow in real-time...</p>
+              <p>Results will be revealed when the round ends!</p>
+            </div>
+          </div>
+          
+          <div className="voting-statistics">
+            <div className="stat-item">
+              <span className="stat-label">Total Votes Cast:</span>
+              <span className="stat-value">{totalVotes}</span>
+            </div>
+            <div className="stat-item">
+              <span className="stat-label">People Who Voted:</span>
+              <span className="stat-value">{voterCount}</span>
+            </div>
+            <div className="stat-item">
+              <span className="stat-label">Connected Users:</span>
+              <span className="stat-value">{connectedUsers}</span>
+            </div>
+          </div>
+        </div>
       ) : (
         <div className="results-container">
-          {winner && (
+          {winners.length > 0 && (
             <div className="winner-section">
-              <div className="result-title winner-title">🏆 Champion</div>
-              <div className="result-character">{winner.emoji}</div>
-              <div className="result-name">{winner.name}</div>
-              <div className="result-votes">{winner.votes} votes</div>
+              <div className="result-title winner-title">
+                🏆 {winners.length === 1 ? 'Champion' : 'Champions'} 🏆
+              </div>
+              <div className="multiple-results">
+                {winners.map((winner) => (
+                  <div key={winner.id} className="result-card winner-card">
+                    <div className="result-character">{winner.emoji}</div>
+                    <div className="result-name">{winner.name}</div>
+                    <div className="result-votes">{winner.votes} votes</div>
+                  </div>
+                ))}
+              </div>
+              {winners.length > 1 && (
+                <div className="tie-message">It's a tie! Multiple champions share the victory!</div>
+              )}
             </div>
           )}
           
-          {loser && winner && winner.id !== loser.id && (
+          {losers.length > 0 && (
             <div className="loser-section">
-              <div className="result-title loser-title">💀 Defeated</div>
-              <div className="result-character">{loser.emoji}</div>
-              <div className="result-name">{loser.name}</div>
-              <div className="result-votes">{loser.votes} votes</div>
+              <div className="result-title loser-title">
+                💀 {losers.length === 1 ? 'Defeated' : 'Defeated'} 💀
+              </div>
+              <div className="multiple-results">
+                {losers.map((loser) => (
+                  <div key={loser.id} className="result-card loser-card">
+                    <div className="result-character">{loser.emoji}</div>
+                    <div className="result-name">{loser.name}</div>
+                    <div className="result-votes">{loser.votes} votes</div>
+                  </div>
+                ))}
+              </div>
+              {losers.length > 1 && (
+                <div className="tie-message">Multiple contestants share the defeat...</div>
+              )}
             </div>
           )}
           
@@ -147,12 +207,6 @@ const BombasticResults = () => {
               <span className="stat-label">People Who Voted:</span>
               <span className="stat-value">{voterCount}</span>
             </div>
-            {gameState.roundActive && (
-              <div className="stat-item">
-                <span className="stat-label">Connected Users:</span>
-                <span className="stat-value">{connectedUsers}</span>
-              </div>
-            )}
           </div>
         </div>
       )}

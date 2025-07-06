@@ -61,10 +61,12 @@ The application will be available at:
 For production deployment (Render, Heroku, etc.), see [DEPLOYMENT.md](DEPLOYMENT.md) for detailed instructions.
 
 Quick deployment to Render:
-1. Connect your GitHub repository
-2. Set Build Command: `npm install && cd client && npm install && npm run build`
+1. Connect your GitHub repository  
+2. Set Build Command: `npm run build`
 3. Set Start Command: `npm start`
 4. Add Environment Variable: `NODE_ENV=production`
+
+**If you get "ENOENT" error**: The build command must be exactly `npm run build` (not the longer version). This ensures proper React app building.
 
 ## How to Use
 
