@@ -56,11 +56,7 @@ function finishRound() {
   }
   
   console.log('Round finished');
-  const gameStateToSend = {
-    ...gameState,
-    connectedUserCount: gameState.connectedUsers.size
-  };
-  io.emit('roundFinished', gameStateToSend);
+  io.emit('roundFinished', getCleanGameState());
 }
 
 function getCleanGameState() {
@@ -120,11 +116,7 @@ io.on('connection', (socket) => {
     gameState.votes[contestantId]++;
     gameState.userVotes[userId] = contestantId;
     
-    const gameStateToSend = {
-      ...gameState,
-      connectedUserCount: gameState.connectedUsers.size
-    };
-    io.emit('voteUpdate', gameStateToSend);
+    io.emit('voteUpdate', getCleanGameState());
     checkRoundCompletion();
   });
   
@@ -143,11 +135,7 @@ io.on('connection', (socket) => {
       gameState.votes[contestant.id] = 0;
     });
     
-    const gameStateToSend = {
-      ...gameState,
-      connectedUserCount: gameState.connectedUsers.size
-    };
-    io.emit('gameReset', gameStateToSend);
+    io.emit('gameReset', getCleanGameState());
     console.log('Game reset');
   });
   
@@ -161,11 +149,7 @@ io.on('connection', (socket) => {
       gameState.votes[contestantId]--;
       delete gameState.userVotes[socket.id];
       
-      const gameStateToSend = {
-        ...gameState,
-        connectedUserCount: gameState.connectedUsers.size
-      };
-      io.emit('voteUpdate', gameStateToSend);
+      io.emit('voteUpdate', getCleanGameState());
       checkRoundCompletion();
     }
   });

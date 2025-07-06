@@ -7,8 +7,27 @@ const BombasticResults = () => {
   const [gameState, setGameState] = useState(null);
 
   useEffect(() => {
-    const newSocket = io('http://localhost:3001');
+    console.log('BombasticResults: Attempting to connect to Socket.IO server...');
+    const newSocket = io('http://localhost:3001', {
+      transports: ['websocket', 'polling'],
+      timeout: 5000,
+      reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000
+    });
     setSocket(newSocket);
+
+    newSocket.on('connect', () => {
+      console.log('BombasticResults: Connected to server successfully!', newSocket.id);
+    });
+
+    newSocket.on('connect_error', (error) => {
+      console.error('BombasticResults: Socket connection error:', error);
+    });
+
+    newSocket.on('disconnect', (reason) => {
+      console.log('BombasticResults: Disconnected from server:', reason);
+    });
 
     newSocket.on('gameState', (state) => {
       setGameState(state);
