@@ -57,10 +57,15 @@ const BombasticResults = () => {
 
     const contestants = gameState.contestants.map(contestant => ({
       ...contestant,
-      votes: gameState.votes[contestant.id]
+      votes: gameState.votes[contestant.id] || 0
     }));
 
     const sortedContestants = [...contestants].sort((a, b) => b.votes - a.votes);
+    
+    // If no votes were cast at all, return empty results
+    if (sortedContestants[0].votes === 0) {
+      return { winners: [], losers: [] };
+    }
     
     const maxVotes = sortedContestants[0].votes;
     const minVotes = sortedContestants[sortedContestants.length - 1].votes;
@@ -124,18 +129,13 @@ const BombasticResults = () => {
               🔥 Votes Are Being Cast! 🔥
             </div>
             <div className="flames-container">
-              {gameState.contestants.map((contestant, index) => {
-                const hasVotes = gameState.votes[contestant.id] > 0;
-                return (
+              {gameState.contestants
+                .filter(contestant => gameState.votes[contestant.id] > 0)
+                .map((contestant, index) => (
                   <div key={contestant.id} className="flame-indicator" style={{animationDelay: `${index * 0.2}s`}}>
-                    <div className={`flame ${hasVotes ? 'voted' : 'unvoted'}`}>🔥</div>
-                    <div className={`contestant-mini ${hasVotes ? 'voted' : 'unvoted'}`}>
-                      <div className="mini-emoji">{contestant.emoji}</div>
-                      <div className="mini-name">{contestant.name}</div>
-                    </div>
+                    <div className="flame voted">🔥</div>
                   </div>
-                );
-              })}
+                ))}
             </div>
             <div className="voting-status">
               <p>Watching the magical votes flow in real-time...</p>
@@ -160,7 +160,13 @@ const BombasticResults = () => {
         </div>
       ) : (
         <div className="results-container">
-          {winners.length > 0 && (
+          {totalVotes === 0 ? (
+            <div className="result-title" style={{ color: '#c0c0c0' }}>
+              Round ended with no votes cast
+            </div>
+          ) : (
+            <>
+              {winners.length > 0 && (
             <div className="winner-section">
               <div className="result-title winner-title">
                 🏆 {winners.length === 1 ? 'Champion' : 'Champions'} 🏆
@@ -200,16 +206,20 @@ const BombasticResults = () => {
             </div>
           )}
           
-          <div className="voting-statistics">
-            <div className="stat-item">
-              <span className="stat-label">Total Votes Cast:</span>
-              <span className="stat-value">{totalVotes}</span>
+          {totalVotes > 0 && (
+            <div className="voting-statistics">
+              <div className="stat-item">
+                <span className="stat-label">Total Votes Cast:</span>
+                <span className="stat-value">{totalVotes}</span>
+              </div>
+              <div className="stat-item">
+                <span className="stat-label">People Who Voted:</span>
+                <span className="stat-value">{voterCount}</span>
+              </div>
             </div>
-            <div className="stat-item">
-              <span className="stat-label">People Who Voted:</span>
-              <span className="stat-value">{voterCount}</span>
-            </div>
-          </div>
+          )}
+          </>
+          )}
         </div>
       )}
 
