@@ -79,7 +79,9 @@ let gameState = {
   roundActive: true,
   roundTimer: null,
   roundEndTime: null,
-  connectedUsers: new Set()
+  connectedUsers: new Set(),
+  partyTimeUsers: new Set(), // Only users on /party-time page
+  userPages: new Map() // Track which page each user is on
 };
 
 gameState.contestants.forEach(contestant => {
@@ -96,6 +98,21 @@ function startRoundTimer() {
   
   console.log('Round timer started - 30 seconds remaining');
   io.emit('roundTimer', { endTime: gameState.roundEndTime });
+  
+  // Send periodic timer updates
+  const timerInterval = setInterval(() => {
+    if (!gameState.roundActive || !gameState.roundEndTime) {
+      clearInterval(timerInterval);
+      return;
+    }
+    
+    const timeLeft = Math.max(0, Math.ceil((gameState.roundEndTime - Date.now()) / 1000));
+    io.emit('roundTimer', { endTime: gameState.roundEndTime, timeLeft });
+    
+    if (timeLeft === 0) {
+      clearInterval(timerInterval);
+    }
+  }, 1000);
 }
 
 function finishRound() {
@@ -105,8 +122,11 @@ function finishRound() {
     gameState.roundTimer = null;
   }
   
-  console.log('Round finished');
-  io.emit('roundFinished', getCleanGameState());
+  console.log('Round finished - broadcasting to all clients');
+  const finalState = getCleanGameState();
+  console.log('Final state being sent:', finalState);
+  io.emit('roundFinished', finalState);
+  io.emit('voteUpdate', finalState); // Also send as voteUpdate to ensure all clients get it
 }
 
 function getCleanGameState() {
@@ -116,15 +136,18 @@ function getCleanGameState() {
     contestants: gameState.contestants,
     roundActive: gameState.roundActive,
     roundEndTime: gameState.roundEndTime,
-    connectedUserCount: gameState.connectedUsers.size
+    connectedUserCount: gameState.partyTimeUsers.size // Only count party-time users
   };
 }
 
 function checkRoundCompletion() {
-  const totalUsers = gameState.connectedUsers.size;
+  const totalUsers = gameState.partyTimeUsers.size; // Only count party-time users
   const votedUsers = Object.keys(gameState.userVotes).length;
   
+  console.log(`Round completion check: ${votedUsers}/${totalUsers} party-time users have voted`);
+  
   if (totalUsers > 0 && votedUsers >= totalUsers) {
+    console.log('All party-time users have voted - finishing round automatically');
     finishRound();
   }
 }
@@ -135,6 +158,23 @@ io.on('connection', (socket) => {
   gameState.connectedUsers.add(socket.id);
   
   socket.emit('gameState', getCleanGameState());
+  
+  // Handle page tracking
+  socket.on('joinPage', (data) => {
+    const { page } = data;
+    gameState.userPages.set(socket.id, page);
+    
+    if (page === 'party-time') {
+      gameState.partyTimeUsers.add(socket.id);
+      console.log(`User ${socket.id} joined party-time page. Party-time users: ${gameState.partyTimeUsers.size}`);
+    } else {
+      gameState.partyTimeUsers.delete(socket.id);
+      console.log(`User ${socket.id} left party-time page. Party-time users: ${gameState.partyTimeUsers.size}`);
+    }
+    
+    // Broadcast updated user count
+    io.emit('voteUpdate', getCleanGameState());
+  });
   
   socket.on('vote', (data) => {
     const { contestantId } = data;
@@ -192,6 +232,8 @@ io.on('connection', (socket) => {
   socket.on('disconnect', () => {
     console.log('User disconnected:', socket.id);
     gameState.connectedUsers.delete(socket.id);
+    gameState.partyTimeUsers.delete(socket.id);
+    gameState.userPages.delete(socket.id);
     
     // Remove user's vote if they had one
     if (gameState.userVotes[socket.id]) {
@@ -201,7 +243,12 @@ io.on('connection', (socket) => {
       
       io.emit('voteUpdate', getCleanGameState());
       checkRoundCompletion();
+    } else {
+      // Still broadcast to update user count
+      io.emit('voteUpdate', getCleanGameState());
     }
+    
+    console.log(`Party-time users after disconnect: ${gameState.partyTimeUsers.size}`);
   });
 });
 

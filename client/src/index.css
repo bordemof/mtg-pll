@@ -4,8 +4,16 @@
   box-sizing: border-box;
 }
 
+@font-face {
+  font-family: 'Helsinki';
+  src: url('../public/fonts/helsinki.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
 body {
-  font-family: 'Helsinki', 'Beleren', 'Trajan Pro', 'Times New Roman', serif;
+  font-family: 'Helsinki', 'Kalam', 'Beleren', 'Trajan Pro', 'Times New Roman', serif;
   background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
   color: #d4af37;
   min-height: 100vh;

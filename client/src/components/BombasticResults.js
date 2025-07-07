@@ -6,6 +6,7 @@ const BombasticResults = () => {
   const [socket, setSocket] = useState(null);
   const [gameState, setGameState] = useState(null);
   const [connectionStatus, setConnectionStatus] = useState('connecting');
+  const [timeLeft, setTimeLeft] = useState(null);
 
   useEffect(() => {
     console.log('BombasticResults: Attempting to connect to Socket.IO server...');
@@ -54,11 +55,18 @@ const BombasticResults = () => {
     newSocket.on('roundFinished', (state) => {
       console.log('Round finished event received:', state);
       setGameState(state);
+      setTimeLeft(null); // Clear timer when round finishes
     });
 
     newSocket.on('roundTimer', (data) => {
       console.log('Round timer event received:', data);
-      // The timer info can be used to show countdown on results page if needed
+      if (data.timeLeft !== undefined) {
+        setTimeLeft(data.timeLeft);
+      } else if (data.endTime) {
+        // Calculate time left from endTime
+        const timeLeft = Math.max(0, Math.ceil((data.endTime - Date.now()) / 1000));
+        setTimeLeft(timeLeft);
+      }
     });
 
     return () => {
@@ -144,6 +152,19 @@ const BombasticResults = () => {
             <div className="result-title" style={{ color: '#4caf50' }}>
               🔥 Votes Are Being Cast! 🔥
             </div>
+            {timeLeft !== null && timeLeft > 0 && (
+              <div className="countdown-container">
+                <div className="clock-animation">
+                  <div className="clock-face">
+                    <div className="clock-hand" style={{ transform: `rotate(${(30 - timeLeft) * 12}deg)` }}></div>
+                    <div className="clock-center"></div>
+                  </div>
+                </div>
+                <div className="countdown-text">
+                  {timeLeft}s remaining
+                </div>
+              </div>
+            )}
             <div className="flames-container">
               {gameState.contestants
                 .filter(contestant => gameState.votes[contestant.id] > 0)
