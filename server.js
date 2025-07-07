@@ -140,12 +140,16 @@ io.on('connection', (socket) => {
     const { contestantId } = data;
     const userId = socket.id;
     
+    console.log(`Vote received from ${userId} for contestant ${contestantId}`);
+    
     if (!gameState.roundActive) {
+      console.log(`Vote rejected: Round not active for user ${userId}`);
       socket.emit('error', 'Round has ended, votes are no longer accepted');
       return;
     }
     
     if (gameState.votes[contestantId] === undefined) {
+      console.log(`Vote rejected: Invalid contestant ${contestantId} for user ${userId}`);
       socket.emit('error', 'Invalid contestant');
       return;
     }
@@ -166,7 +170,12 @@ io.on('connection', (socket) => {
     gameState.votes[contestantId]++;
     gameState.userVotes[userId] = contestantId;
     
-    io.emit('voteUpdate', getCleanGameState());
+    console.log('Current votes:', gameState.votes);
+    console.log('Current user votes:', gameState.userVotes);
+    
+    const cleanState = getCleanGameState();
+    console.log('Emitting voteUpdate with state:', cleanState);
+    io.emit('voteUpdate', cleanState);
     checkRoundCompletion();
   });
   
