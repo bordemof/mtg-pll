@@ -23,6 +23,8 @@ const BombasticResults = () => {
     newSocket.on('connect', () => {
       console.log('BombasticResults: Connected to server successfully!', newSocket.id);
       setConnectionStatus('connected');
+      // Tell server we're on the results page
+      newSocket.emit('joinPage', { page: 'results' });
     });
 
     newSocket.on('connect_error', (error) => {

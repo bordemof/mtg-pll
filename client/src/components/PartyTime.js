@@ -28,6 +28,8 @@ const PartyTime = () => {
     newSocket.on('connect', () => {
       console.log('Connected to server successfully!', newSocket.id);
       setConnectionStatus('connected');
+      // Tell server we're on the party-time page
+      newSocket.emit('joinPage', { page: 'party-time' });
     });
 
     newSocket.on('connect_error', (error) => {
