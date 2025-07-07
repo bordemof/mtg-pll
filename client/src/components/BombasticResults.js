@@ -124,16 +124,18 @@ const BombasticResults = () => {
               🔥 Votes Are Being Cast! 🔥
             </div>
             <div className="flames-container">
-              {gameState.contestants.map((contestant, index) => (
-                <div key={contestant.id} className="flame-indicator" style={{animationDelay: `${index * 0.2}s`}}>
-                  <div className="flame">🔥</div>
-                  <div className="contestant-mini">
-                    <div className="mini-emoji">{contestant.emoji}</div>
-                    <div className="mini-name">{contestant.name}</div>
-                    <div className="mini-votes">{gameState.votes[contestant.id]} votes</div>
+              {gameState.contestants.map((contestant, index) => {
+                const hasVotes = gameState.votes[contestant.id] > 0;
+                return (
+                  <div key={contestant.id} className="flame-indicator" style={{animationDelay: `${index * 0.2}s`}}>
+                    <div className={`flame ${hasVotes ? 'voted' : 'unvoted'}`}>🔥</div>
+                    <div className={`contestant-mini ${hasVotes ? 'voted' : 'unvoted'}`}>
+                      <div className="mini-emoji">{contestant.emoji}</div>
+                      <div className="mini-name">{contestant.name}</div>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
             <div className="voting-status">
               <p>Watching the magical votes flow in real-time...</p>
