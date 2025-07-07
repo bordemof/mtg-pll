@@ -7,6 +7,7 @@ const BombasticResults = () => {
   const [gameState, setGameState] = useState(null);
   const [connectionStatus, setConnectionStatus] = useState('connecting');
   const [timeLeft, setTimeLeft] = useState(null);
+  const [timerInterval, setTimerInterval] = useState(null);
 
   useEffect(() => {
     console.log('BombasticResults: Attempting to connect to Socket.IO server...');
@@ -56,23 +57,53 @@ const BombasticResults = () => {
       console.log('Round finished event received:', state);
       setGameState(state);
       setTimeLeft(null); // Clear timer when round finishes
+      
+      // Clear timer interval
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        setTimerInterval(null);
+      }
     });
 
     newSocket.on('roundTimer', (data) => {
       console.log('Round timer event received:', data);
+      
+      // Clear any existing interval
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        setTimerInterval(null);
+      }
+      
       if (data.timeLeft !== undefined) {
         setTimeLeft(data.timeLeft);
       } else if (data.endTime) {
-        // Calculate time left from endTime
-        const timeLeft = Math.max(0, Math.ceil((data.endTime - Date.now()) / 1000));
-        setTimeLeft(timeLeft);
+        // Calculate initial time left
+        const initialTimeLeft = Math.max(0, Math.ceil((data.endTime - Date.now()) / 1000));
+        setTimeLeft(initialTimeLeft);
+        
+        // Start local countdown
+        const interval = setInterval(() => {
+          const currentTimeLeft = Math.max(0, Math.ceil((data.endTime - Date.now()) / 1000));
+          setTimeLeft(currentTimeLeft);
+          
+          if (currentTimeLeft <= 0) {
+            clearInterval(interval);
+            setTimerInterval(null);
+          }
+        }, 100); // Update every 100ms for smooth animation
+        
+        setTimerInterval(interval);
       }
     });
 
     return () => {
+      // Cleanup on unmount
+      if (timerInterval) {
+        clearInterval(timerInterval);
+      }
       newSocket.close();
     };
-  }, []);
+  }, [timerInterval]);
 
   const getResults = () => {
     if (!gameState) return { winners: [], losers: [] };
@@ -152,19 +183,6 @@ const BombasticResults = () => {
             <div className="result-title" style={{ color: '#4caf50' }}>
               🔥 Votes Are Being Cast! 🔥
             </div>
-            {timeLeft !== null && timeLeft > 0 && (
-              <div className="countdown-container">
-                <div className="clock-animation">
-                  <div className="clock-face">
-                    <div className="clock-hand" style={{ transform: `rotate(${(30 - timeLeft) * 12}deg)` }}></div>
-                    <div className="clock-center"></div>
-                  </div>
-                </div>
-                <div className="countdown-text">
-                  {timeLeft}s remaining
-                </div>
-              </div>
-            )}
             <div className="flames-container">
               {gameState.contestants
                 .filter(contestant => gameState.votes[contestant.id] > 0)
@@ -174,6 +192,20 @@ const BombasticResults = () => {
                   </div>
                 ))}
             </div>
+            {totalVotes > 0 && timeLeft !== null && timeLeft > 0 && (
+              <div className="countdown-container">
+                <div className="timer-circle">
+                  <div className="timer-progress" style={{ 
+                    strokeDashoffset: `${310 - (timeLeft / 30) * 310}px`,
+                    transition: 'stroke-dashoffset 0.1s linear'
+                  }}></div>
+                  <div className="timer-number">{timeLeft}</div>
+                </div>
+                <div className="countdown-text">
+                  seconds remaining
+                </div>
+              </div>
+            )}
             <div className="voting-status">
               <p>Watching the magical votes flow in real-time...</p>
               <p>Results will be revealed when the round ends!</p>
