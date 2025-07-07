@@ -41,26 +41,40 @@ const PartyTime = () => {
     });
 
     newSocket.on('gameState', (state) => {
-      console.log('Received gameState:', state);
+      console.log('Received initial gameState:', state);
+      console.log('My socket ID:', newSocket.id);
+      console.log('User votes in initial state:', state.userVotes);
+      
       setGameState(state);
       setRoundFinished(!state.roundActive);
       
       // Check if we have already voted
       if (state.userVotes && state.userVotes[newSocket.id]) {
+        console.log('Initial state: I have voted for:', state.userVotes[newSocket.id]);
         setHasVoted(true);
         setVotedFor(state.userVotes[newSocket.id]);
+      } else {
+        console.log('Initial state: I have not voted yet');
+        setHasVoted(false);
+        setVotedFor(null);
       }
     });
 
     newSocket.on('voteUpdate', (state) => {
       console.log('Received voteUpdate:', state);
+      console.log('My socket ID:', newSocket.id);
+      console.log('User votes:', state.userVotes);
+      
       setGameState(state);
+      setRoundFinished(!state.roundActive);
       
       // Update voting state when receiving vote updates
       if (state.userVotes && state.userVotes[newSocket.id]) {
+        console.log('I have voted for:', state.userVotes[newSocket.id]);
         setHasVoted(true);
         setVotedFor(state.userVotes[newSocket.id]);
       } else {
+        console.log('I have not voted yet');
         setHasVoted(false);
         setVotedFor(null);
       }
@@ -112,12 +126,15 @@ const PartyTime = () => {
       return;
     }
 
-    if (socket) {
-      socket.emit('vote', { contestantId });
-      setHasVoted(true);
-      setVotedFor(contestantId);
-      setError('');
+    if (!socket || !socket.connected) {
+      setError('Not connected to server. Please refresh the page.');
+      return;
     }
+
+    // Only emit vote, don't set local state until server confirms
+    console.log('Emitting vote for contestant:', contestantId);
+    socket.emit('vote', { contestantId });
+    setError('');
   };
 
   const handleReset = () => {
