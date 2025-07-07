@@ -42,6 +42,8 @@ const BombasticResults = () => {
     });
 
     newSocket.on('voteUpdate', (state) => {
+      console.log('BombasticResults: Vote update received:', state);
+      console.log('BombasticResults: Round active?', state.roundActive);
       setGameState(state);
     });
 
@@ -117,6 +119,8 @@ const BombasticResults = () => {
   const totalVotes = Object.values(gameState.votes).reduce((sum, votes) => sum + votes, 0);
   const voterCount = gameState.userVotes ? Object.keys(gameState.userVotes).length : 0;
   const connectedUsers = gameState.connectedUserCount || 0;
+
+  console.log('BombasticResults render - roundActive:', gameState.roundActive, 'totalVotes:', totalVotes, 'winners:', winners.length, 'losers:', losers.length);
 
   return (
     <div className="page-container">
