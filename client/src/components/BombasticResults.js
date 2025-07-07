@@ -49,6 +49,16 @@ const BombasticResults = () => {
       setGameState(state);
     });
 
+    newSocket.on('roundFinished', (state) => {
+      console.log('Round finished event received:', state);
+      setGameState(state);
+    });
+
+    newSocket.on('roundTimer', (data) => {
+      console.log('Round timer event received:', data);
+      // The timer info can be used to show countdown on results page if needed
+    });
+
     return () => {
       newSocket.close();
     };
